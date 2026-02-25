@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal Docente</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #e8ecef; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 350px; }
+        label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.8em; }
+        select, input { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; margin-top: 10px; cursor: pointer; font-weight: bold; }
+        .btn-entrar { background: #27ae60; color: white; }
+        .btn-busca { background: #f39c12; color: white; }
+        .btn-dash { background: #1a73e8; color: white; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <h2 style="text-align:center">Portal Docente</h2>
+    
+    <label>PROFESSOR</label>
+    <select id="professor"><option>Carregando...</option></select>
+    
+    <label>SENHA</label>
+    <input type="password" id="senha" placeholder="Digite sua senha">
+
+    <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
+    
+    <label>ESCOLA</label><select id="escola"><option>Carregando...</option></select>
+    <label>TURNO</label><select id="turno"><option>Carregando...</option></select>
+    <label>TURMA</label><select id="turma"><option>Carregando...</option></select>
+
+    <button class="btn btn-entrar" onclick="validar('novo')">NOVO PLANO (Preencha Tudo)</button>
+    <button class="btn btn-busca" onclick="validar('busca')">MEUS PLANOS / CORRIGIR</button>
+    <button class="btn btn-dash" onclick="window.location.href='dashboard.html'">VER ESTATÍSTICAS</button>
+</div>
+
+<script>
+    const url = 'https://script.google.com/macros/s/AKfycbzjbOoYI8d9raOS-kE5M1h_kPUJme7MrfdQ-OHUDBevDf_JLO6qmy-2TCxMHn_rMUDdtw/exec'; // 
+
+    window.onload = () => {
+        fetch(url + '?tipo=docentes').then(res => res.json()).then(data => {
+            data.shift();
+            const montar = (id, col) => {
+                const itens = [...new Set(data.map(r => r[col]).filter(v => v !== ""))].sort();
+                const el = document.getElementById(id);
+                el.innerHTML = '<option value="">Selecione...</option>';
+                itens.forEach(i => el.innerHTML += `<option value="${i}">${i}</option>`);
+            };
+            montar('escola', 0); montar('professor', 1); montar('turno', 2); montar('turma', 3);
+        });
+    };
+
+    function validar(modo) {
+        const user = document.getElementById('professor').value;
+        const pass = document.getElementById('senha').value;
+        
+        // Validação básica para ambos os modos
+        if(!user || !pass) return alert("Selecione o professor e digite a senha!");
+
+        // Se for NOVO PLANO, exige escola, turno e turma
+        if(modo === 'novo') {
+            const escola = document.getElementById('escola').value;
+            const turno = document.getElementById('turno').value;
+            const turma = document.getElementById('turma').value;
+            if(!escola || !turno || !turma) return alert("Para um NOVO PLANO, preencha Escola, Turno e Turma!");
+            
+            localStorage.setItem('escola', escola);
+            localStorage.setItem('turno', turno);
+            localStorage.setItem('turma', turma);
+        }
+
+        // Valida senha no servidor
+        fetch(`${url}?tipo=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`)
+        .then(r => r.json()).then(res => {
+            if(res.sucesso) {
+                localStorage.setItem('professor', user);
+                window.location.href = (modo === 'novo') ? 'formulario.html' : 'busca.html';
+            } else {
+                alert("Senha incorreta!");
+            }
+        });
+    }
+</script>
+</body>
+</html>

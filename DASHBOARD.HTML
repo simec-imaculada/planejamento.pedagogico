@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 1000px; margin: auto; }
+        .chart-box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+    <button onclick="window.location.href='index.html'" style="margin-bottom:20px">← Voltar</button>
+    <div class="grid">
+        <div class="chart-box"><h3>Planos por Bimestre</h3><canvas id="c1"></canvas></div>
+        <div class="chart-box"><h3>Distribuição por Área</h3><canvas id="c2"></canvas></div>
+    </div>
+<script>
+    const url = 'https://script.google.com/macros/s/AKfycbzjbOoYI8d9raOS-kE5M1h_kPUJme7MrfdQ-OHUDBevDf_JLO6qmy-2TCxMHn_rMUDdtw/exec'; // 
+    fetch(url + '?tipo=stats').then(r => r.json()).then(data => {
+        new Chart(document.getElementById('c1'), { type: 'bar', data: { labels: Object.keys(data.porBimestre), datasets: [{ label: 'Qtd', data: Object.values(data.porBimestre), backgroundColor: '#3498db' }] } });
+        new Chart(document.getElementById('c2'), { type: 'pie', data: { labels: Object.keys(data.porArea), datasets: [{ data: Object.values(data.porArea), backgroundColor: ['#e74c3c','#2ecc71','#f1c40f','#9b59b6','#34495e'] }] } });
+    });
+</script>
+</body>
+</html>

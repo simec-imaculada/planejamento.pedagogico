@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Relatório de Planos - Meus Registros</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 10px; background: #f4f7f6; }
+        .container { max-width: 100%; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        h3 { color: #1a73e8; border-bottom: 2px solid #1a73e8; padding-bottom: 10px; margin-top: 0; }
+        
+        /* Área de Filtros */
+        .filtros-container { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin-bottom: 20px; 
+            display: flex; 
+            flex-wrap: wrap; 
+            gap: 15px; 
+            align-items: flex-end;
+        }
+        .filtro-item { display: flex; flex-direction: column; gap: 5px; }
+        .filtro-item label { font-size: 11px; font-weight: bold; color: #555; }
+        .filtro-item input, .filtro-item select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* Estilo da Tabela */
+        .table-responsive { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
+        th, td { padding: 8px; border: 1px solid #ddd; text-align: left; vertical-align: top; }
+        th { background: #1a73e8; color: white; position: sticky; top: 0; }
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        tr:hover { background-color: #f1f4f9; }
+        
+        /* Botões */
+        .no-print { margin-bottom: 10px; display: flex; gap: 10px; }
+        .btn { padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; }
+        .btn-voltar { background: #666; color: white; }
+        .btn-pdf { background: #27ae60; color: white; }
+        .btn-limpar { background: #e0e0e0; color: #333; }
+        .btn-edit { background: #f39c12; color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 4px; margin-bottom: 3px; }
+        .btn-del { background: #e74c3c; color: white; border: none; padding: 4px 8px; cursor: pointer; border-radius: 4px; }
+
+        @media print {
+            .no-print, .filtros-container, .acoes-col { display: none !important; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; border: none; width: 100%; }
+            table { font-size: 9px; }
+            th { background: #eee !important; color: black; border: 1px solid #000; }
+            td { border: 1px solid #000; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="no-print">
+            <button class="btn btn-voltar" onclick="window.location.href='index.html'">← Voltar</button>
+            <button class="btn btn-pdf" onclick="window.print()">📄 Gerar PDF / Imprimir</button>
+        </div>
+
+        <h3>Relatório de Planos: <span id="nomeProf"></span></h3>
+
+        <div class="filtros-container no-print">
+            <div class="filtro-item">
+                <label>PESQUISAR TEMA/HABILIDADE</label>
+                <input type="text" id="filtroTexto" placeholder="Digite algo..." onkeyup="aplicarFiltros()">
+            </div>
+            <div class="filtro-item">
+                <label>FILTRAR POR BIMESTRE</label>
+                <select id="filtroBimestre" onchange="aplicarFiltros()">
+                    <option value="">Todos</option>
+                    <option value="1º Bimestre">1º Bimestre</option>
+                    <option value="2º Bimestre">2º Bimestre</option>
+                    <option value="3º Bimestre">3º Bimestre</option>
+                    <option value="4º Bimestre">4º Bimestre</option>
+                </select>
+            </div>
+            <button class="btn btn-limpar" onclick="limparFiltros()">Limpar Filtros</button>
+        </div>
+        
+        <div class="table-responsive">
+            <div id="resultado">Carregando registros...</div>
+        </div>
+    </div>
+
+<script>
+    const url = 'https://script.google.com/macros/s/AKfycbzjbOoYI8d9raOS-kE5M1h_kPUJme7MrfdQ-OHUDBevDf_JLO6qmy-2TCxMHn_rMUDdtw/exec'; // 
+    const prof = localStorage.getItem('professor');
+    let dadosOriginais = []; // Armazena os dados vindos da planilha
+
+    window.onload = () => {
+        if(!prof) { window.location.href = 'index.html'; return; }
+        document.getElementById('nomeProf').innerText = prof;
+        carregar();
+    };
+
+    function carregar() {
+        fetch(`${url}?tipo=busca&prof=${encodeURIComponent(prof)}`)
+            .then(r => r.json()).then(res => {
+                dadosOriginais = res.reverse(); // Guarda os dados e inverte (mais novos primeiro)
+                renderizarTabela(dadosOriginais);
+            })
+            .catch(err => {
+                document.getElementById('resultado').innerHTML = "Erro ao carregar dados.";
+            });
+    }
+
+    function renderizarTabela(lista) {
+        if(lista.length === 0) {
+            document.getElementById('resultado').innerHTML = "Nenhum plano encontrado com esses filtros.";
+            return;
+        }
+        
+        let h = `<table>
+            <thead>
+                <tr>
+                    <th class="no-print acoes-col">Ações</th>
+                    <th>Bimestre</th>
+                    <th>Data</th>
+                    <th>Escola/Turma</th>
+                    <th>Área de Conhecimento</th>
+                    <th>Ano/Série</th>
+                    <th>Práticas de Linguagem</th>
+                    <th>Objetos de Conhecimento</th>
+                    <th>Habilidades</th>
+                    <th>Tema/Subtema</th>
+                    <th>Metodologia</th>
+                </tr>
+            </thead>
+            <tbody>`;
+
+        lista.forEach(i => {
+            h += `<tr>
+                <td class="no-print acoes-col">
+                    <button class="btn-edit" onclick="editar('${i.id}', '${encodeURIComponent(JSON.stringify(i.dados))}')">EDITAR</button>
+                    <button class="btn-del" onclick="deletar('${i.id}')">EXCLUIR</button>
+                </td>
+                <td>${i.dados[4]}</td>
+                <td>${i.dados[5]}</td>
+                <td>${i.dados[0]}<br><b>${i.dados[3]}</b></td>
+                <td>${i.dados[6]}</td>
+                <td>${i.dados[7]}</td>
+                <td>${i.dados[8]}</td>
+                <td>${i.dados[9]}</td>
+                <td>${i.dados[10]}</td>
+                <td>${i.dados[11]}</td>
+                <td>${i.dados[12]}</td>
+            </tr>`;
+        });
+        h += `</tbody></table>`;
+        document.getElementById('resultado').innerHTML = h;
+    }
+
+    function aplicarFiltros() {
+        const texto = document.getElementById('filtroTexto').value.toLowerCase();
+        const bimestre = document.getElementById('filtroBimestre').value;
+
+        const filtrados = dadosOriginais.filter(item => {
+            const matchBimestre = bimestre === "" || item.dados[4] === bimestre;
+            
+            // Procura o texto em todas as colunas pedagógicas (Área, Práticas, Objetos, Habilidades, Tema, Metodologia)
+            const stringZona = (item.dados[6] + item.dados[8] + item.dados[9] + item.dados[10] + item.dados[11] + item.dados[12]).toLowerCase();
+            const matchTexto = stringZona.includes(texto);
+
+            return matchBimestre && matchTexto;
+        });
+
+        renderizarTabela(filtrados);
+    }
+
+    function limparFiltros() {
+        document.getElementById('filtroTexto').value = "";
+        document.getElementById('filtroBimestre').value = "";
+        renderizarTabela(dadosOriginais);
+    }
+
+    function deletar(id) {
+        if(!confirm("Deseja apagar este plano permanentemente?")) return;
+        const fd = new FormData(); 
+        fd.append('acao', 'deletar'); 
+        fd.append('rowId', id);
+        fetch(url, { method: 'POST', body: fd }).then(() => carregar());
+    }
+
+    function editar(id, dados) {
+        localStorage.setItem('edit_id', id);
+        localStorage.setItem('edit_dados', decodeURIComponent(dados));
+        window.location.href = 'formulario.html?modo=editar';
+    }
+</script>
+</body>
+</html>

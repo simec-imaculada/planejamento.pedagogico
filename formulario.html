@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Formulário</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; }
+        label { display: block; margin-top: 15px; font-weight: bold; }
+        select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-salvar { width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 5px; margin-top: 25px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2 id="titulo">Registro de Aula</h2>
+    <form id="formAula">
+        <input type="hidden" name="rowId" id="rowId">
+        <input type="hidden" name="escola" id="hEscola"><input type="hidden" name="professor" id="hProfessor">
+        <input type="hidden" name="turno" id="hTurno"><input type="hidden" name="turma" id="hTurma">
+
+        <div style="display:flex; gap:20px">
+            <div style="flex:1"><label>BIMESTRE</label><select name="bimestre"><option>1º Bimestre</option><option>2º Bimestre</option><option>3º Bimestre</option><option>4º Bimestre</option></select></div>
+            <div style="flex:1"><label>DATA</label><input type="date" name="data" required id="campoData"></div>
+        </div>
+
+        <label>ÁREA</label><select id="area" name="area" required></select>
+        <label>ANO</label><select id="ano" name="ano" disabled required></select>
+        <label>PRÁTICAS</label><select id="praticas" name="praticas" disabled required></select>
+        <label>OBJETOS</label><select id="objetos" name="objetos" disabled required></select>
+        <label>HABILIDADES</label><select id="habilidades" name="habilidades" disabled required></select>
+        
+        <label>TEMA</label><input type="text" name="tema" required>
+        <label>METODOLOGIA</label><textarea name="metodologia" rows="4" required></textarea>
+
+        <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR NA PLANILHA</button>
+    </form>
+</div>
+<script>
+    const url = 'https://script.google.com/macros/s/AKfycbzjbOoYI8d9raOS-kE5M1h_kPUJme7MrfdQ-OHUDBevDf_JLO6qmy-2TCxMHn_rMUDdtw/exec'; // 
+    let baseDados = [];
+
+    window.onload = () => {
+        document.getElementById('hEscola').value = localStorage.getItem('escola');
+        document.getElementById('hProfessor').value = localStorage.getItem('professor');
+        document.getElementById('hTurno').value = localStorage.getItem('turno');
+        document.getElementById('hTurma').value = localStorage.getItem('turma');
+
+        fetch(url).then(res => res.json()).then(data => {
+            baseDados = data;
+            preencher('area', [...new Set(data.map(r => r[0]))]);
+            
+            const params = new URLSearchParams(window.location.search);
+            if(params.get('modo') === 'editar') {
+                const d = JSON.parse(localStorage.getItem('edit_dados'));
+                document.getElementById('rowId').value = localStorage.getItem('edit_id');
+                document.getElementById('titulo').innerText = "✏️ Corrigindo Plano";
+                document.getElementsByName('bimestre')[0].value = d[4];
+                document.getElementById('campoData').value = d[5];
+                document.getElementsByName('tema')[0].value = d[11];
+                document.getElementsByName('metodologia')[0].value = d[12];
+                document.getElementById('btnSalvar').innerText = "ATUALIZAR REGISTRO";
+            }
+        });
+    };
+
+    function preencher(id, lista) {
+        const sel = document.getElementById(id);
+        sel.innerHTML = '<option value="">Selecione...</option>';
+        lista.forEach(i => sel.innerHTML += `<option value="${i}">${i}</option>`);
+        sel.disabled = false;
+    }
+
+    // Lógica Cascata
+    document.getElementById('area').onchange = (e) => {
+        const f = baseDados.filter(r => r[0] === e.target.value);
+        preencher('ano', [...new Set(f.map(r => r[1]))]);
+    };
+    document.getElementById('ano').onchange = (e) => {
+        const f = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === e.target.value);
+        preencher('praticas', [...new Set(f.map(r => r[2]))]);
+    };
+    document.getElementById('praticas').onchange = (e) => {
+        const f = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === e.target.value);
+        preencher('objetos', [...new Set(f.map(r => r[3]))]);
+    };
+    document.getElementById('objetos').onchange = (e) => {
+        const f = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === document.getElementById('praticas').value && r[3] === e.target.value);
+        preencher('habilidades', [...new Set(f.map(r => r[4]))]);
+    };
+
+    document.getElementById('formAula').onsubmit = (e) => {
+        e.preventDefault();
+        fetch(url, { method: 'POST', body: new FormData(e.target) }).then(() => { alert('Concluído!'); window.location.href = 'index.html'; });
+    };
+</script>
+</body>
+</html>
