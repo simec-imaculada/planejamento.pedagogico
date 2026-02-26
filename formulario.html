@@ -2,19 +2,24 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Registro de Aula</title>
+    <title>Registro de Aula - Seguro</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
         .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
         label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
-        select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 20px; }
+        select, input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        .btn-salvar { width: 100%; padding: 16px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .status-rascunho { font-size: 11px; color: #666; font-style: italic; margin-top: 5px; text-align: right; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2 id="titulo">📝 Registro de Aula</h2>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h2 id="titulo">📝 Registro de Aula</h2>
+        <button onclick="window.location.href='index.html'" style="color:red; border:none; background:none; cursor:pointer;">Sair</button>
+    </div>
+
     <form id="formAula">
         <input type="hidden" name="rowId" id="rowId">
         <div class="card">
@@ -34,18 +39,29 @@
         <div class="card">
             <label>Tema</label><input type="text" id="tema" name="tema" required>
             <label>Metodologia</label><textarea id="metodologia" name="metodologia" rows="5" required></textarea>
+            <div id="statusSalvo" class="status-rascunho"></div>
         </div>
-        <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR REGISTRO</button>
+        <button type="submit" class="btn-salvar" id="btnSalvar">FINALIZAR E SALVAR NA PLANILHA</button>
     </form>
 </div>
+
 <script>
-    const url = 'https://script.google.com/macros/s/AKfycbyTFf8mbcbQjmLveCdsKe1uG3Z8PCtZCgJHc3Md--y60METkRy0yhlqwKbbuq5fQk2N7A/exec'; let baseDados = [];
+    const url = 'https://script.google.com/macros/s/AKfycbwdOJTwK5jiwW0R2xDIBGqGkwcUphuUUd3ZAkB4ktDJMPR99D-7lRrm85RUhw1JGJ3XpA/exec'; 
+    let baseDados = [];
+
+    // TRAVA DE SEGURANÇA: Só entra se estiver logado
+    if (!localStorage.getItem('professor')) {
+        alert("Acesso negado! Faça login primeiro.");
+        window.location.href = 'index.html';
+    }
 
     window.onload = () => {
         fetch(url).then(res => res.json()).then(data => {
-            baseDados = data; preencher('area', [...new Set(data.map(r => r[0]))].sort());
-            const p = new URLSearchParams(window.location.search);
-            if(p.get('modo') === 'editar') carregarEdicao();
+            baseDados = data; 
+            preencher('area', [...new Set(data.map(r => r[0]))].sort());
+            const modo = new URLSearchParams(window.location.search).get('modo');
+            if(modo === 'editar') carregarEdicao();
+            else recuperarRascunho(); // Tenta recuperar rascunho se for plano novo
         });
     };
 
@@ -54,40 +70,74 @@
         lista.forEach(i => s.innerHTML += `<option value="${i}">${i}</option>`); s.disabled = false;
     }
 
+    // Cascata BNCC
     document.getElementById('area').onchange = (e) => preencher('ano', [...new Set(baseDados.filter(r => r[0] === e.target.value).map(r => r[1]))]);
     document.getElementById('ano').onchange = (e) => preencher('praticas', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === e.target.value).map(r => r[2]))]);
     document.getElementById('praticas').onchange = (e) => preencher('objetos', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === e.target.value).map(r => r[3]))]);
     document.getElementById('objetos').onchange = (e) => preencher('habilidades', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === document.getElementById('praticas').value && r[3] === e.target.value).map(r => r[4]))]);
 
+    // RASCUNHO AUTOMÁTICO (A cada 5 seg)
+    setInterval(() => {
+        const tema = document.getElementById('tema').value;
+        const meto = document.getElementById('metodologia').value;
+        if(tema || meto) {
+            localStorage.setItem('rascunho_plano', JSON.stringify({tema, meto, data: document.getElementById('campoData').value}));
+            document.getElementById('statusSalvo').innerText = "Rascunho salvo no navegador às " + new Date().toLocaleTimeString();
+        }
+    }, 5000);
+
+    function recuperarRascunho() {
+        const salvo = localStorage.getItem('rascunho_plano');
+        if (salvo && confirm("Você tem um rascunho não finalizado. Deseja recuperar?")) {
+            const d = JSON.parse(salvo);
+            document.getElementById('tema').value = d.tema;
+            document.getElementById('metodologia').value = d.meto;
+            document.getElementById('campoData').value = d.data;
+        }
+    }
+
     function carregarEdicao() {
-        const d = JSON.parse(localStorage.getItem('edit_dados'));
-        document.getElementById('titulo').innerText = "✏️ Editar Registro";
+        const raw = localStorage.getItem('edit_dados'); if(!raw) return;
+        const d = JSON.parse(raw);
+        document.getElementById('titulo').innerText = "✏️ Corrigindo Registro";
         document.getElementById('rowId').value = localStorage.getItem('edit_id');
         document.getElementById('bimestre').value = d[4];
-        document.getElementById('campoData').value = new Date(d[5]).toISOString().split('T')[0];
+        if(d[5]) document.getElementById('campoData').value = new Date(d[5]).toISOString().split('T')[0];
         document.getElementById('totalAulas').value = d[6];
         document.getElementById('tema').value = d[12];
         document.getElementById('metodologia').value = d[13];
 
-        const steps = ['area', 'ano', 'praticas', 'objetos', 'habilidades'];
-        const vals = [d[7], d[8], d[9], d[10], d[11]];
-        
-        const disparar = (i) => {
-            if(i >= steps.length) return;
-            const el = document.getElementById(steps[i]);
-            el.value = vals[i];
+        const disparar = (id, val, prox) => {
+            const el = document.getElementById(id); el.value = val;
             el.dispatchEvent(new Event('change'));
-            setTimeout(() => disparar(i+1), 150);
+            if(prox) setTimeout(() => disparar(prox.id, prox.val, prox.next), 300);
         };
-        disparar(0);
+        disparar('area', d[7], {id:'ano', val:d[8], next:{id:'praticas', val:d[9], next:{id:'objetos', val:d[10], next:{id:'habilidades', val:d[11]}}}});
     }
 
     document.getElementById('formAula').onsubmit = (e) => {
         e.preventDefault();
-        const btn = document.getElementById('btnSalvar'); btn.innerText = "Salvando..."; btn.disabled = true;
+        const btn = document.getElementById('btnSalvar'); 
+        btn.innerText = "⏳ ENVIANDO PARA PLANILHA..."; 
+        btn.disabled = true;
+
         const fd = new FormData(e.target);
-        ['escola', 'professor', 'turno', 'turma'].forEach(k => fd.append(k, localStorage.getItem(k)));
-        fetch(url, {method:'POST', body:fd}).then(() => { alert("Sucesso!"); window.location.href='index.html'; });
+        fd.append('escola', localStorage.getItem('escola') || "");
+        fd.append('professor', localStorage.getItem('professor') || "");
+        fd.append('turno', localStorage.getItem('turno') || "");
+        fd.append('turma', localStorage.getItem('turma') || "");
+
+        fetch(url, {method:'POST', body:fd}).then(() => {
+            alert("✅ PLANO SALVO COM SUCESSO!");
+            localStorage.removeItem('rascunho_plano');
+            localStorage.removeItem('edit_id'); 
+            localStorage.removeItem('edit_dados');
+            window.location.href='index.html';
+        }).catch(() => {
+            alert("❌ Erro ao conectar. Tente novamente.");
+            btn.disabled = false;
+            btn.innerText = "TENTAR SALVAR NOVAMENTE";
+        });
     };
 </script>
 </body>

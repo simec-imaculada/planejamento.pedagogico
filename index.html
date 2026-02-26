@@ -5,43 +5,49 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Docente - Login</title>
     <style>
-        :root { --primary: #1a73e8; --success: #27ae60; --text: #3c4043; }
-        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        :root { --primary: #1a73e8; --bg: #f0f2f5; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 360px; text-align: center; }
-        .logo-container img { max-width: 120px; margin-bottom: 5px; }
-        .copyright { font-size: 10px; color: #777; margin-bottom: 20px; display: block; }
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 12px; text-align: left; color: #5f6368; text-transform: uppercase; }
+        .logo-container img { max-width: 100px; margin-bottom: 10px; }
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 11px; text-align: left; color: #5f6368; text-transform: uppercase; }
         select, input { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #dadce0; box-sizing: border-box; outline: none; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
-        .btn:active { transform: scale(0.98); }
-        #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; bottom: 30px; z-index: 99; }
-        #toast.show { visibility: visible; animation: fadein 0.5s; }
-        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
+        .btn { width: 100%; padding: 13px; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
+        .btn:hover { opacity: 0.9; transform: scale(1.02); }
+        .copyright { font-size: 10px; color: #999; margin-top: 20px; display: block; }
     </style>
 </head>
 <body>
-<div id="toast"></div>
 <div class="card">
     <div class="logo-container">
         <img src="niumvideo.jpeg" alt="Logo">
-        <span class="copyright">Direitos Autorais Erivaldo Silva</span>
+        <h3 style="margin:0; color:#444;">Portal do Professor</h3>
     </div>
+
     <label>Professor</label>
     <select id="professor"><option>Carregando...</option></select>
+    
     <label>Senha</label>
     <input type="password" id="senha" placeholder="Sua senha">
-    <button class="btn" style="background:#f39c12" onclick="validar('busca')">MEUS PLANOS / CORRIGIR</button>
-    <button class="btn" style="background:#1a73e8" onclick="validar('dash')">📊 ESTATÍSTICAS</button>
+
+    <button class="btn" style="background:#f39c12" onclick="validar('busca')">🔍 BUSCA SIMPLES (FICHAS)</button>
+    <button class="btn" style="background:#00bcd4" onclick="validar('relatorio')">📋 RELATÓRIO DETALHADO (TABELA)</button>
+    <button class="btn" style="background:#1a73e8" onclick="validar('dash')">📊 ESTATÍSTICAS (PAINEL)</button>
+    
     <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-    <label>Escola / Turma</label>
-    <select id="escola"><option value="">Escola...</option></select>
+    
+    <label>Dados para Novo Plano</label>
+    <select id="escola"><option value="">Selecione a Escola...</option></select>
     <select id="turno" style="margin-top:8px;"><option value="">Turno...</option></select>
     <select id="turma" style="margin-top:8px;"><option value="">Turma...</option></select>
-    <button class="btn" style="background:#27ae60" onclick="validar('novo')">NOVO PLANO</button>
+    
+    <button class="btn" style="background:#27ae60" onclick="validar('novo')">➕ CRIAR NOVO PLANO</button>
+    
+    <span class="copyright">© Erivaldo Silva</span>
 </div>
+
 <script>
-    const url = 'https://script.google.com/macros/s/AKfycbyTFf8mbcbQjmLveCdsKe1uG3Z8PCtZCgJHc3Md--y60METkRy0yhlqwKbbuq5fQk2N7A/exec'; 
-    function showToast(m, c="#333") { const x = document.getElementById("toast"); x.innerText = m; x.style.background = c; x.className = "show"; setTimeout(() => x.className = "", 3000); }
+    const url = 'https://script.google.com/macros/s/AKfycbwdOJTwK5jiwW0R2xDIBGqGkwcUphuUUd3ZAkB4ktDJMPR99D-7lRrm85RUhw1JGJ3XpA/exec'; 
+
     window.onload = () => {
         fetch(url + '?tipo=docentes').then(res => res.json()).then(data => {
             data.shift();
@@ -54,22 +60,39 @@
             montar('professor', 1); montar('escola', 0); montar('turno', 2); montar('turma', 3);
         });
     };
+
     function validar(modo) {
         const prof = document.getElementById('professor').value;
         const pass = document.getElementById('senha').value;
-        if(!prof || !pass) return showToast("Preencha tudo!", "#e74c3c");
+        
+        if(!prof || !pass) { alert("Selecione professor e senha!"); return; }
+
         fetch(`${url}?tipo=login&user=${encodeURIComponent(prof)}&pass=${encodeURIComponent(pass)}`)
         .then(r => r.json()).then(res => {
             if(res.sucesso) {
-                localStorage.clear();
                 localStorage.setItem('professor', prof);
+
                 if(modo === 'novo') {
-                    localStorage.setItem('escola', document.getElementById('escola').value);
-                    localStorage.setItem('turno', document.getElementById('turno').value);
-                    localStorage.setItem('turma', document.getElementById('turma').value);
+                    const esc = document.getElementById('escola').value;
+                    const tur = document.getElementById('turno').value;
+                    const trm = document.getElementById('turma').value;
+                    
+                    if(!esc || !tur || !trm) { alert("Selecione Escola, Turno e Turma!"); return; }
+                    
+                    localStorage.setItem('escola', esc);
+                    localStorage.setItem('turno', tur);
+                    localStorage.setItem('turma', trm);
+                    localStorage.removeItem('edit_id');
+                    localStorage.removeItem('edit_dados');
                 }
-                window.location.href = modo === 'dash' ? 'dashboard.html' : (modo === 'novo' ? 'formulario.html' : 'busca.html');
-            } else showToast("Senha incorreta!", "#e74c3c");
+
+                // Lógica de redirecionamento atualizada
+                if (modo === 'dash') window.location.href = 'painel.html';
+                else if (modo === 'relatorio') window.location.href = 'busca_detalhada.html';
+                else if (modo === 'busca') window.location.href = 'busca.html';
+                else if (modo === 'novo') window.location.href = 'formulario.html';
+                
+            } else alert("Senha incorreta!");
         });
     }
 </script>

@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Relatório Detalhado - Portal Docente</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #f8f9fa; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; }
+        .container-fluid { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        /* Cabeçalho do Relatório */
+        .header-relatorio { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid var(--primary); margin-bottom: 20px; padding-bottom: 10px; }
+        .filtros { display: flex; gap: 15px; background: #eee; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .filtros input, .filtros select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; }
+
+        /* Tabela Estilo Relatório */
+        .table-container { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 11px; }
+        th { background: var(--primary); color: white; padding: 8px; text-align: left; text-transform: uppercase; border: 1px solid #ddd; }
+        td { padding: 8px; border: 1px solid #ddd; vertical-align: top; }
+        tr:hover { background: #f1f1f1; }
+
+        /* Botões */
+        .btn { padding: 8px 15px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; color: white; margin-right: 5px; }
+        .btn-voltar { background: #666; }
+        .btn-pdf { background: #27ae60; }
+        .btn-edit { background: #f39c12; padding: 4px 8px; font-size: 9px; margin-bottom: 3px; display: block; width: 100%; }
+        .btn-del { background: #e74c3c; padding: 4px 8px; font-size: 9px; display: block; width: 100%; }
+
+        /* Timbre para Impressão */
+        #timbreRelatorio { display: none; text-align: center; margin-bottom: 20px; }
+        .logo-relatorio { max-height: 80px; margin-bottom: 10px; }
+
+        @media print {
+            .no-print { display: none !important; }
+            #timbreRelatorio { display: block !important; }
+            body { padding: 0; background: white; }
+            .container-fluid { box-shadow: none; width: 100%; padding: 0; }
+            table { font-size: 9px; width: 100%; }
+            th { background: #eee !important; color: black !important; border: 1px solid #000; }
+            td { border: 1px solid #000; }
+            @page { size: landscape; margin: 1cm; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container-fluid">
+    <div id="timbreRelatorio">
+        <img id="imgLogoRelatorio" src="" class="logo-relatorio">
+        <h2 id="nomeEscolaRelatorio" style="margin:0; text-transform: uppercase;"></h2>
+        <p style="margin:5px 0; font-weight:bold;">RELATÓRIO SEMANAL DE ATIVIDADES PEDAGÓGICAS</p>
+    </div>
+
+    <div class="header-relatorio no-print">
+        <div style="display:flex; align-items:center; gap:15px;">
+            <button class="btn btn-voltar" onclick="window.location.href='index.html'">← Voltar</button>
+            <h2 id="tituloProf" style="margin:0; color: var(--primary);">Relatório de Planos</h2>
+        </div>
+        <button class="btn btn-pdf" onclick="prepararImpressao()">🖨️ Gerar PDF / Imprimir</button>
+    </div>
+
+    <div class="filtros no-print">
+        <div>
+            <label style="display:block; font-size:10px; font-weight:bold;">PESQUISAR TEMA/HABILIDADE</label>
+            <input type="text" id="inputBusca" placeholder="Digite algo..." onkeyup="filtrarTabela()">
+        </div>
+        <div>
+            <label style="display:block; font-size:10px; font-weight:bold;">FILTRAR POR BIMESTRE</label>
+            <select id="filtroBimestre" onchange="filtrarTabela()">
+                <option value="">Todos</option>
+                <option value="1º Bimestre">1º Bimestre</option>
+                <option value="2º Bimestre">2º Bimestre</option>
+                <option value="3º Bimestre">3º Bimestre</option>
+                <option value="4º Bimestre">4º Bimestre</option>
+            </select>
+        </div>
+        <button class="btn" style="background:#888; align-self: flex-end;" onclick="limparFiltros()">Limpar</button>
+    </div>
+
+    <div class="table-container">
+        <table id="tabelaDados">
+            <thead>
+                <tr>
+                    <th class="no-print">Ações</th>
+                    <th>Bimestre</th>
+                    <th>Data</th>
+                    <th>Escola/Turma</th>
+                    <th>Área</th>
+                    <th>Ano</th>
+                    <th>Práticas</th>
+                    <th>Objetos</th>
+                    <th>Habilidades</th>
+                    <th>Tema</th>
+                    <th>Metodologia</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const url = 'https://script.google.com/macros/s/AKfycbwdOJTwK5jiwW0R2xDIBGqGkwcUphuUUd3ZAkB4ktDJMPR99D-7lRrm85RUhw1JGJ3XpA/exec'; 
+    const profLogado = localStorage.getItem('professor');
+    let dadosOriginais = [];
+
+    // TABELA DE LOGOS ATUALIZADA
+    const tabelaLogos = {
+        "EMEIF MARIA MADALENA TORRES DANTAS": "https://lh3.googleusercontent.com/d/1rjTUGgFFN7v3WNYH3BxEviNhzhaZ-_EA",
+        "EMEF JOAQUIM ALVES FEITOSA": "https://lh3.googleusercontent.com/d/1foLraCaxPh8yiVUY2lvoPCF36-hnDnBR",
+        "EMEF MIGUEL OTAVIANO DE MEDEIROS": "https://lh3.googleusercontent.com/d/1tsHbZTs2Kq8TFWnKShzcQqXqzg26vs-j",
+        "EMEIF FRANCISCA QUIRINO FERREIRA": "https://lh3.googleusercontent.com/d/1aSPr3krLidZZGB6KlQ7sEbeiIXUgOQIQ",
+        "EMEIF JOÃO GONÇALVES DA SILVA": "https://lh3.googleusercontent.com/d/1saytGYwX_nWg0n3a4oLY8_S9qieW0p0S",
+        "EMEIF JOSÉ ALVES SABINO": "https://lh3.googleusercontent.com/d/1PKupIZhWDcxvfWlaXVwaBS6i-mItQsa6",
+        "EMEIF JOSÉ PEDRO DE MELO": "https://lh3.googleusercontent.com/d/1VPINfIhkuZ7CNzMiyWkqVD5RxnozuMh0",
+        "EMEIF JOSÉ VIEIRA DA SILVA": "https://lh3.googleusercontent.com/d/1CamXcPhkf3nXqvjfyT_EgN_m4_CiEogA",
+        "EMEIF MARIA PEREIRA DOS SANTOS": "https://lh3.googleusercontent.com/d/1npaLJ5eWskOzLmtGkV7oNYP2Woa_sAT9",
+        "PADRAO": "niumvideo.jpeg"
+    };
+
+    window.onload = () => {
+        if (!profLogado) { window.location.href = 'index.html'; return; }
+        document.getElementById('tituloProf').innerText = "Relatório: " + profLogado;
+        buscarDados();
+    };
+
+    function buscarDados() {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "<tr><td colspan='11'>Carregando dados...</td></tr>";
+
+        fetch(url + '?tipo=busca&prof=' + encodeURIComponent(profLogado))
+        .then(r => r.json())
+        .then(dados => {
+            dadosOriginais = dados;
+            renderizarTabela(dados);
+        });
+    }
+
+    function renderizarTabela(lista) {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "";
+
+        lista.forEach(item => {
+            const d = item.dados;
+            const dataFormatada = new Date(d[5]).toLocaleDateString('pt-BR', {timeZone: 'UTC'});
+            const dadosStr = encodeURIComponent(JSON.stringify(d));
+
+            corpo.innerHTML += `
+                <tr>
+                    <td class="no-print">
+                        <button class="btn btn-edit" onclick="prepararEdicao(${item.id}, '${dadosStr}')">EDITAR</button>
+                        <button class="btn btn-del" onclick="deletar(${item.id})">EXCLUIR</button>
+                    </td>
+                    <td>${d[4]}</td>
+                    <td>${dataFormatada}</td>
+                    <td>${d[0]}<br><b>${d[3]}</b></td>
+                    <td>${d[7]}</td>
+                    <td>${d[8]}</td>
+                    <td>${d[9]}</td>
+                    <td>${d[10]}</td>
+                    <td style="min-width:120px;">${d[11]}</td>
+                    <td><b>${d[12]}</b></td>
+                    <td style="font-size:9px;">${d[13]}</td>
+                </tr>
+            `;
+        });
+    }
+
+    // FUNÇÃO PARA PREPARAR LOGO ANTES DE IMPRIMIR
+    function prepararImpressao() {
+        if (dadosOriginais.length > 0) {
+            // Pega a escola do primeiro item da lista atual
+            const escolaDestaque = dadosOriginais[0].dados[0]; 
+            document.getElementById('nomeEscolaRelatorio').innerText = escolaDestaque;
+            document.getElementById('imgLogoRelatorio').src = tabelaLogos[escolaDestaque] || tabelaLogos["PADRAO"];
+            
+            setTimeout(() => { window.print(); }, 700);
+        } else {
+            alert("Não há dados para imprimir.");
+        }
+    }
+
+    function filtrarTabela() {
+        const termo = document.getElementById('inputBusca').value.toLowerCase();
+        const bimestre = document.getElementById('filtroBimestre').value;
+        const filtrados = dadosOriginais.filter(item => {
+            const d = item.dados;
+            const matchBusca = d[12].toLowerCase().includes(termo) || d[11].toLowerCase().includes(termo);
+            const matchBimestre = bimestre === "" || d[4] === bimestre;
+            return matchBusca && matchBimestre;
+        });
+        renderizarTabela(filtrados);
+    }
+
+    function limparFiltros() {
+        document.getElementById('inputBusca').value = "";
+        document.getElementById('filtroBimestre').value = "";
+        renderizarTabela(dadosOriginais);
+    }
+
+    function prepararEdicao(id, dadosCod) {
+        localStorage.setItem('edit_id', id);
+        localStorage.setItem('edit_dados', decodeURIComponent(dadosCod));
+        window.location.href = 'formulario.html?modo=editar';
+    }
+
+    function deletar(id) {
+        if(!confirm("Deseja realmente excluir?")) return;
+        fetch(url + '?acao=deletar&rowId=' + id, {method: 'POST'}).then(() => buscarDados());
+    }
+</script>
+</body>
+</html>

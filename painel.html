@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Desempenho</title>
+    <style>
+        :root { --primary: #1a73e8; --bg: #f0f2f5; --text: #3c4043; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 16px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+        
+        /* Cabeçalho */
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .titulo-secao { display: flex; align-items: center; gap: 10px; font-size: 22px; color: var(--primary); font-weight: bold; }
+        .btn-voltar { background: #5f6368; color: white; border: none; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; display: flex; align-items: center; gap: 5px; }
+        
+        /* Info Professor */
+        .info-user { background: #e8f0fe; padding: 15px; border-radius: 10px; border-left: 5px solid var(--primary); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; font-weight: 600; color: #1967d2; }
+
+        /* Tabela de Resumo */
+        .card-resumo { border: 1px solid #e0e0e0; border-radius: 12px; padding: 20px; }
+        .card-resumo h3 { margin-top: 0; font-size: 18px; color: #5f6368; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; font-size: 12px; color: #80868b; text-transform: uppercase; padding: 10px 0; }
+        td { padding: 15px 0; border-bottom: 1px solid #f1f3f4; font-weight: 500; }
+        .col-aulas { text-align: right; font-weight: bold; font-size: 16px; }
+
+        /* Rodapé da Tabela (Soma Total) */
+        .row-total { background: #f8f9fa; }
+        .row-total td { border-bottom: none; padding: 20px 15px; border-radius: 8px; }
+        .label-total { font-weight: bold; text-transform: uppercase; color: var(--text); font-size: 14px; }
+        .badge-total { background: #34a853; color: white; padding: 8px 12px; border-radius: 20px; font-size: 18px; display: inline-block; min-width: 30px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <div class="titulo-secao">📊 Meu Desempenho</div>
+        <button class="btn-voltar" onclick="window.location.href='index.html'">← Voltar</button>
+    </div>
+
+    <div class="info-user">
+        👤 Professor(a): <span id="nomeProfessor">...</span>
+    </div>
+
+    <div class="card-resumo">
+        <h3>Resumo por Disciplina</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>ÁREA</th>
+                    <th style="text-align: right;">AULAS</th>
+                </tr>
+            </thead>
+            <tbody id="corpoTabela">
+                </tbody>
+            <tfoot>
+                <tr class="row-total">
+                    <td class="label-total">TOTAL ACUMULADO</td>
+                    <td align="right"><span id="totalGeral" class="badge-total">0</span></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+</div>
+
+<script>
+    const url = 'https://script.google.com/macros/s/AKfycbwdOJTwK5jiwW0R2xDIBGqGkwcUphuUUd3ZAkB4ktDJMPR99D-7lRrm85RUhw1JGJ3XpA/exec'; // 
+    const profLogado = localStorage.getItem('professor');
+
+    // SEGURANÇA: Bloqueia acesso sem login
+    if (!profLogado) {
+        window.location.href = 'index.html';
+    }
+
+    window.onload = () => {
+        document.getElementById('nomeProfessor').innerText = profLogado;
+        carregarEstatisticas();
+    };
+
+    function carregarEstatisticas() {
+        const corpo = document.getElementById('corpoTabela');
+        corpo.innerHTML = "<tr><td colspan='2'>Carregando dados...</td></tr>";
+
+        fetch(url + '?tipo=consolidado')
+        .then(r => r.json())
+        .then(dados => {
+            // Filtra apenas os registros do professor logado
+            const meusDados = dados.filter(d => d.professor.trim() === profLogado.trim());
+            
+            // Agrupa e soma aulas por Área (Disciplina)
+            let resumo = {};
+            let totalAcumulado = 0;
+
+            meusDados.forEach(d => {
+                let qtd = parseInt(d.aulas) || 0;
+                resumo[d.area] = (resumo[d.area] || 0) + qtd;
+                totalAcumulado += qtd;
+            });
+
+            // Renderiza as linhas da tabela
+            corpo.innerHTML = "";
+            const areas = Object.keys(resumo).sort();
+            
+            if (areas.length === 0) {
+                corpo.innerHTML = "<tr><td colspan='2'>Nenhum registro encontrado.</td></tr>";
+            } else {
+                areas.forEach(area => {
+                    corpo.innerHTML += `
+                        <tr>
+                            <td>${area}</td>
+                            <td class="col-aulas">${resumo[area]}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            // Atualiza o crachá do total acumulado
+            document.getElementById('totalGeral').innerText = totalAcumulado;
+        })
+        .catch(erro => {
+            corpo.innerHTML = "<tr><td colspan='2'>Erro ao carregar dados.</td></tr>";
+            console.error(erro);
+        });
+    }
+</script>
+
+</body>
+</html>
