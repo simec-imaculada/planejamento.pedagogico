@@ -2,83 +2,74 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Portal Docente</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Portal Docente - Login</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #e8ecef; display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); width: 350px; }
-        label { display: block; margin-top: 15px; font-weight: bold; font-size: 0.8em; }
-        select, input { width: 100%; padding: 10px; margin-top: 5px; border-radius: 6px; border: 1px solid #ddd; box-sizing: border-box; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; margin-top: 10px; cursor: pointer; font-weight: bold; }
-        .btn-entrar { background: #27ae60; color: white; }
-        .btn-busca { background: #f39c12; color: white; }
-        .btn-dash { background: #1a73e8; color: white; }
+        :root { --primary: #1a73e8; --success: #27ae60; --text: #3c4043; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 360px; text-align: center; }
+        .logo-container img { max-width: 120px; margin-bottom: 5px; }
+        .copyright { font-size: 10px; color: #777; margin-bottom: 20px; display: block; }
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 12px; text-align: left; color: #5f6368; text-transform: uppercase; }
+        select, input { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #dadce0; box-sizing: border-box; outline: none; }
+        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
+        #toast { visibility: hidden; min-width: 250px; background: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; bottom: 30px; z-index: 99; }
+        #toast.show { visibility: visible; animation: fadein 0.5s; }
+        @keyframes fadein { from {bottom: 0; opacity: 0;} to {bottom: 30px; opacity: 1;} }
     </style>
 </head>
 <body>
+<div id="toast"></div>
 <div class="card">
-    <h2 style="text-align:center">Portal Docente</h2>
-    
-    <label>PROFESSOR</label>
+    <div class="logo-container">
+        <img src="niumvideo.jpeg" alt="Logo">
+        <span class="copyright">Direitos Autorais Erivaldo Silva</span>
+    </div>
+    <label>Professor</label>
     <select id="professor"><option>Carregando...</option></select>
-    
-    <label>SENHA</label>
-    <input type="password" id="senha" placeholder="Digite sua senha">
-
-    <hr style="margin-top:20px; border: 0; border-top: 1px solid #eee;">
-    
-    <label>ESCOLA</label><select id="escola"><option>Carregando...</option></select>
-    <label>TURNO</label><select id="turno"><option>Carregando...</option></select>
-    <label>TURMA</label><select id="turma"><option>Carregando...</option></select>
-
-    <button class="btn btn-entrar" onclick="validar('novo')">NOVO PLANO (Preencha Tudo)</button>
-    <button class="btn btn-busca" onclick="validar('busca')">MEUS PLANOS / CORRIGIR</button>
-    <button class="btn btn-dash" onclick="window.location.href='dashboard.html'">VER ESTATÍSTICAS</button>
+    <label>Senha</label>
+    <input type="password" id="senha" placeholder="Sua senha">
+    <button class="btn" style="background:#f39c12" onclick="validar('busca')">MEUS PLANOS / CORRIGIR</button>
+    <button class="btn" style="background:#1a73e8" onclick="validar('dash')">📊 ESTATÍSTICAS</button>
+    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
+    <label>Escola / Turma</label>
+    <select id="escola"><option value="">Escola...</option></select>
+    <select id="turno" style="margin-top:8px;"><option value="">Turno...</option></select>
+    <select id="turma" style="margin-top:8px;"><option value="">Turma...</option></select>
+    <button class="btn" style="background:#27ae60" onclick="validar('novo')">NOVO PLANO</button>
 </div>
-
 <script>
-    const url = 'https://script.google.com/macros/s/AKfycbzjbOoYI8d9raOS-kE5M1h_kPUJme7MrfdQ-OHUDBevDf_JLO6qmy-2TCxMHn_rMUDdtw/exec'; // 
-
+    const url = 'https://script.google.com/macros/s/AKfycbyTFf8mbcbQjmLveCdsKe1uG3Z8PCtZCgJHc3Md--y60METkRy0yhlqwKbbuq5fQk2N7A/exec'; 
+    function showToast(m, c="#333") { const x = document.getElementById("toast"); x.innerText = m; x.style.background = c; x.className = "show"; setTimeout(() => x.className = "", 3000); }
     window.onload = () => {
         fetch(url + '?tipo=docentes').then(res => res.json()).then(data => {
             data.shift();
             const montar = (id, col) => {
                 const itens = [...new Set(data.map(r => r[col]).filter(v => v !== ""))].sort();
                 const el = document.getElementById(id);
-                el.innerHTML = '<option value="">Selecione...</option>';
+                el.innerHTML = `<option value="">${id.toUpperCase()}...</option>`;
                 itens.forEach(i => el.innerHTML += `<option value="${i}">${i}</option>`);
             };
-            montar('escola', 0); montar('professor', 1); montar('turno', 2); montar('turma', 3);
+            montar('professor', 1); montar('escola', 0); montar('turno', 2); montar('turma', 3);
         });
     };
-
     function validar(modo) {
-        const user = document.getElementById('professor').value;
+        const prof = document.getElementById('professor').value;
         const pass = document.getElementById('senha').value;
-        
-        // Validação básica para ambos os modos
-        if(!user || !pass) return alert("Selecione o professor e digite a senha!");
-
-        // Se for NOVO PLANO, exige escola, turno e turma
-        if(modo === 'novo') {
-            const escola = document.getElementById('escola').value;
-            const turno = document.getElementById('turno').value;
-            const turma = document.getElementById('turma').value;
-            if(!escola || !turno || !turma) return alert("Para um NOVO PLANO, preencha Escola, Turno e Turma!");
-            
-            localStorage.setItem('escola', escola);
-            localStorage.setItem('turno', turno);
-            localStorage.setItem('turma', turma);
-        }
-
-        // Valida senha no servidor
-        fetch(`${url}?tipo=login&user=${encodeURIComponent(user)}&pass=${encodeURIComponent(pass)}`)
+        if(!prof || !pass) return showToast("Preencha tudo!", "#e74c3c");
+        fetch(`${url}?tipo=login&user=${encodeURIComponent(prof)}&pass=${encodeURIComponent(pass)}`)
         .then(r => r.json()).then(res => {
             if(res.sucesso) {
-                localStorage.setItem('professor', user);
-                window.location.href = (modo === 'novo') ? 'formulario.html' : 'busca.html';
-            } else {
-                alert("Senha incorreta!");
-            }
+                localStorage.clear();
+                localStorage.setItem('professor', prof);
+                if(modo === 'novo') {
+                    localStorage.setItem('escola', document.getElementById('escola').value);
+                    localStorage.setItem('turno', document.getElementById('turno').value);
+                    localStorage.setItem('turma', document.getElementById('turma').value);
+                }
+                window.location.href = modo === 'dash' ? 'dashboard.html' : (modo === 'novo' ? 'formulario.html' : 'busca.html');
+            } else showToast("Senha incorreta!", "#e74c3c");
         });
     }
 </script>

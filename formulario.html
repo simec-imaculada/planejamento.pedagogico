@@ -2,96 +2,92 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
-    <title>Formulário</title>
+    <title>Registro de Aula</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 30px; border-radius: 10px; }
-        label { display: block; margin-top: 15px; font-weight: bold; }
-        select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; padding: 15px; background: #3498db; color: white; border: none; border-radius: 5px; margin-top: 25px; cursor: pointer; font-weight: bold; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
+        select, input, textarea { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 6px; box-sizing: border-box; }
+        .btn-salvar { width: 100%; padding: 15px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; margin-top: 20px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2 id="titulo">Registro de Aula</h2>
+    <h2 id="titulo">📝 Registro de Aula</h2>
     <form id="formAula">
         <input type="hidden" name="rowId" id="rowId">
-        <input type="hidden" name="escola" id="hEscola"><input type="hidden" name="professor" id="hProfessor">
-        <input type="hidden" name="turno" id="hTurno"><input type="hidden" name="turma" id="hTurma">
-
-        <div style="display:flex; gap:20px">
-            <div style="flex:1"><label>BIMESTRE</label><select name="bimestre"><option>1º Bimestre</option><option>2º Bimestre</option><option>3º Bimestre</option><option>4º Bimestre</option></select></div>
-            <div style="flex:1"><label>DATA</label><input type="date" name="data" required id="campoData"></div>
+        <div class="card">
+            <div style="display:flex; gap:10px;">
+                <div style="flex:1;"><label>Bimestre</label><select name="bimestre" id="bimestre"><option>1º Bimestre</option><option>2º Bimestre</option><option>3º Bimestre</option><option>4º Bimestre</option></select></div>
+                <div style="flex:1;"><label>Data</label><input type="date" name="data" id="campoData" required></div>
+            </div>
+            <label>Aulas</label><select name="totalAulas" id="totalAulas"><option value="1">1 Aula</option><option value="2">2 Aulas</option><option value="3">3 Aulas</option><option value="4">4 Aulas</option></select>
         </div>
-
-        <label>ÁREA</label><select id="area" name="area" required></select>
-        <label>ANO</label><select id="ano" name="ano" disabled required></select>
-        <label>PRÁTICAS</label><select id="praticas" name="praticas" disabled required></select>
-        <label>OBJETOS</label><select id="objetos" name="objetos" disabled required></select>
-        <label>HABILIDADES</label><select id="habilidades" name="habilidades" disabled required></select>
-        
-        <label>TEMA</label><input type="text" name="tema" required>
-        <label>METODOLOGIA</label><textarea name="metodologia" rows="4" required></textarea>
-
-        <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR NA PLANILHA</button>
+        <div class="card">
+            <label>Área</label><select id="area" name="area" required></select>
+            <label>Ano</label><select id="ano" name="ano" disabled required></select>
+            <label>Práticas</label><select id="praticas" name="praticas" disabled required></select>
+            <label>Objetos</label><select id="objetos" name="objetos" disabled required></select>
+            <label>Habilidades</label><select id="habilidades" name="habilidades" disabled required></select>
+        </div>
+        <div class="card">
+            <label>Tema</label><input type="text" id="tema" name="tema" required>
+            <label>Metodologia</label><textarea id="metodologia" name="metodologia" rows="5" required></textarea>
+        </div>
+        <button type="submit" class="btn-salvar" id="btnSalvar">SALVAR REGISTRO</button>
     </form>
 </div>
 <script>
-    const url = 'https://script.google.com/macros/s/AKfycbzjbOoYI8d9raOS-kE5M1h_kPUJme7MrfdQ-OHUDBevDf_JLO6qmy-2TCxMHn_rMUDdtw/exec'; // 
-    let baseDados = [];
+    const url = 'https://script.google.com/macros/s/AKfycbyTFf8mbcbQjmLveCdsKe1uG3Z8PCtZCgJHc3Md--y60METkRy0yhlqwKbbuq5fQk2N7A/exec'; let baseDados = [];
 
     window.onload = () => {
-        document.getElementById('hEscola').value = localStorage.getItem('escola');
-        document.getElementById('hProfessor').value = localStorage.getItem('professor');
-        document.getElementById('hTurno').value = localStorage.getItem('turno');
-        document.getElementById('hTurma').value = localStorage.getItem('turma');
-
         fetch(url).then(res => res.json()).then(data => {
-            baseDados = data;
-            preencher('area', [...new Set(data.map(r => r[0]))]);
-            
-            const params = new URLSearchParams(window.location.search);
-            if(params.get('modo') === 'editar') {
-                const d = JSON.parse(localStorage.getItem('edit_dados'));
-                document.getElementById('rowId').value = localStorage.getItem('edit_id');
-                document.getElementById('titulo').innerText = "✏️ Corrigindo Plano";
-                document.getElementsByName('bimestre')[0].value = d[4];
-                document.getElementById('campoData').value = d[5];
-                document.getElementsByName('tema')[0].value = d[11];
-                document.getElementsByName('metodologia')[0].value = d[12];
-                document.getElementById('btnSalvar').innerText = "ATUALIZAR REGISTRO";
-            }
+            baseDados = data; preencher('area', [...new Set(data.map(r => r[0]))].sort());
+            const p = new URLSearchParams(window.location.search);
+            if(p.get('modo') === 'editar') carregarEdicao();
         });
     };
 
     function preencher(id, lista) {
-        const sel = document.getElementById(id);
-        sel.innerHTML = '<option value="">Selecione...</option>';
-        lista.forEach(i => sel.innerHTML += `<option value="${i}">${i}</option>`);
-        sel.disabled = false;
+        const s = document.getElementById(id); s.innerHTML = '<option value="">Selecione...</option>';
+        lista.forEach(i => s.innerHTML += `<option value="${i}">${i}</option>`); s.disabled = false;
     }
 
-    // Lógica Cascata
-    document.getElementById('area').onchange = (e) => {
-        const f = baseDados.filter(r => r[0] === e.target.value);
-        preencher('ano', [...new Set(f.map(r => r[1]))]);
-    };
-    document.getElementById('ano').onchange = (e) => {
-        const f = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === e.target.value);
-        preencher('praticas', [...new Set(f.map(r => r[2]))]);
-    };
-    document.getElementById('praticas').onchange = (e) => {
-        const f = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === e.target.value);
-        preencher('objetos', [...new Set(f.map(r => r[3]))]);
-    };
-    document.getElementById('objetos').onchange = (e) => {
-        const f = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === document.getElementById('praticas').value && r[3] === e.target.value);
-        preencher('habilidades', [...new Set(f.map(r => r[4]))]);
-    };
+    document.getElementById('area').onchange = (e) => preencher('ano', [...new Set(baseDados.filter(r => r[0] === e.target.value).map(r => r[1]))]);
+    document.getElementById('ano').onchange = (e) => preencher('praticas', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === e.target.value).map(r => r[2]))]);
+    document.getElementById('praticas').onchange = (e) => preencher('objetos', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === e.target.value).map(r => r[3]))]);
+    document.getElementById('objetos').onchange = (e) => preencher('habilidades', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === document.getElementById('praticas').value && r[3] === e.target.value).map(r => r[4]))]);
+
+    function carregarEdicao() {
+        const d = JSON.parse(localStorage.getItem('edit_dados'));
+        document.getElementById('titulo').innerText = "✏️ Editar Registro";
+        document.getElementById('rowId').value = localStorage.getItem('edit_id');
+        document.getElementById('bimestre').value = d[4];
+        document.getElementById('campoData').value = new Date(d[5]).toISOString().split('T')[0];
+        document.getElementById('totalAulas').value = d[6];
+        document.getElementById('tema').value = d[12];
+        document.getElementById('metodologia').value = d[13];
+
+        const steps = ['area', 'ano', 'praticas', 'objetos', 'habilidades'];
+        const vals = [d[7], d[8], d[9], d[10], d[11]];
+        
+        const disparar = (i) => {
+            if(i >= steps.length) return;
+            const el = document.getElementById(steps[i]);
+            el.value = vals[i];
+            el.dispatchEvent(new Event('change'));
+            setTimeout(() => disparar(i+1), 150);
+        };
+        disparar(0);
+    }
 
     document.getElementById('formAula').onsubmit = (e) => {
         e.preventDefault();
-        fetch(url, { method: 'POST', body: new FormData(e.target) }).then(() => { alert('Concluído!'); window.location.href = 'index.html'; });
+        const btn = document.getElementById('btnSalvar'); btn.innerText = "Salvando..."; btn.disabled = true;
+        const fd = new FormData(e.target);
+        ['escola', 'professor', 'turno', 'turma'].forEach(k => fd.append(k, localStorage.getItem(k)));
+        fetch(url, {method:'POST', body:fd}).then(() => { alert("Sucesso!"); window.location.href='index.html'; });
     };
 </script>
 </body>
