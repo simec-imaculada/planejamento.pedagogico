@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Painel Coordenação</title>
+    <style>
+        body { font-family: sans-serif; background: #f0f2f5; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 20px; border-radius: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 12px; }
+        th { background: #1a73e8; color: white; padding: 10px; text-align: left; }
+        td { padding: 10px; border-bottom: 1px solid #ddd; }
+        select { padding: 10px; border-radius: 5px; border: 1px solid #ccc; width: 250px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" style="text-decoration: none; color: #1a73e8; font-weight: bold;">⬅ Voltar</a>
+        <h2>📊 Registros dos Professores</h2>
+        <select id="filtroProf" onchange="filtrar()">
+            <option value="">Filtrar por Professor...</option>
+        </select>
+        <table>
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Professor</th>
+                    <th>Turma</th>
+                    <th>Disciplina</th>
+                    <th>Tema</th>
+                </tr>
+            </thead>
+            <tbody id="tabela"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const url = 'https://script.google.com/macros/s/AKfycbw7wTGHKZ3j8HNDW2bhodphWVBKb5n3jIu7O_8hWfB9oChBmzEq8X3PoPcxyUQW_Hgu3w/exec';
+        let dados = [];
+
+        window.onload = () => {
+            fetch(url + '?tipo=busca_geral')
+            .then(r => r.json())
+            .then(res => {
+                dados = res;
+                const sel = document.getElementById('filtroProf');
+                const nomes = [...new Set(dados.map(x => x.dados[1]))].sort();
+                nomes.forEach(n => {
+                    let opt = document.createElement('option'); opt.value = n; opt.text = n; sel.add(opt);
+                });
+                filtrar();
+            });
+        };
+
+        function filtrar() {
+            const prof = document.getElementById('filtroProf').value;
+            const corpo = document.getElementById('tabela');
+            corpo.innerHTML = "";
+            
+            dados.filter(x => prof === "" || x.dados[1] === prof).reverse().forEach(x => {
+                let r = corpo.insertRow();
+                r.innerHTML = `<td>${new Date(x.dados[5]).toLocaleDateString()}</td><td>${x.dados[1]}</td><td>${x.dados[3]}</td><td>${x.dados[7]}</td><td>${x.dados[12]}</td>`;
+            });
+        }
+    </script>
+</body>
+</html>

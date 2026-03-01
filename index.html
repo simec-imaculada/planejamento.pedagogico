@@ -3,97 +3,177 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Portal Docente - Login</title>
+    <title>Portal do Professor - Início</title>
     <style>
         :root { --primary: #1a73e8; --bg: #f0f2f5; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 30px; border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,0.1); width: 100%; max-width: 360px; text-align: center; }
-        .logo-container img { max-width: 100px; margin-bottom: 10px; }
-        label { display: block; margin-top: 15px; font-weight: 600; font-size: 11px; text-align: left; color: #5f6368; text-transform: uppercase; }
-        select, input { width: 100%; padding: 12px; margin-top: 5px; border-radius: 8px; border: 1px solid #dadce0; box-sizing: border-box; outline: none; }
-        .btn { width: 100%; padding: 13px; border: none; border-radius: 8px; margin-top: 10px; cursor: pointer; font-weight: bold; color: white; transition: 0.3s; }
-        .btn:hover { opacity: 0.9; transform: scale(1.02); }
-        .copyright { font-size: 10px; color: #999; margin-top: 20px; display: block; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .card { background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
+        .logo { width: 80px; height: 80px; border-radius: 50%; margin-bottom: 15px; object-fit: cover; border: 3px solid var(--primary); }
+        h2 { color: #333; margin-bottom: 5px; }
+        p { color: #666; margin-bottom: 25px; font-size: 14px; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        select, input { width: 100%; padding: 12px; border: 2px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; outline: none; transition: 0.3s; margin-bottom: 10px; background: #fff; }
+        select:focus, input:focus { border-color: var(--primary); }
+        label { font-size: 11px; font-weight: bold; color: var(--primary); text-transform: uppercase; margin-left: 5px; display: block; text-align: left; margin-bottom: 3px; }
+        
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; display: block; text-decoration: none; text-align: center; box-sizing: border-box; }
+        .btn-login { background: var(--primary); color: white; }
+        .btn-menu { background: white; color: var(--primary); border: 2px solid var(--primary); }
+        .btn-menu:hover { background: var(--primary); color: white; }
+        .btn-sair { background: #f8d7da; color: #721c24; font-size: 11px; padding: 6px 12px; border-radius: 4px; border: none; cursor: pointer; margin-top: 15px; }
+
+        #areaLogin, #areaSelecaoLocal, #areaMenu { display: none; }
     </style>
 </head>
 <body>
+
 <div class="card">
-    <div class="logo-container">
-        <img src="niumvideo.jpeg" alt="Logo">
-        <h3 style="margin:0; color:#444;">Portal do Professor</h3>
+    <img src="niumvideo.jpeg" alt="Logo" class="logo">
+
+    <div id="areaLogin">
+        <h2>Acesso Docente</h2>
+        <p>Selecione seu usuário e senha</p>
+        <select id="listaProfessores"><option value="">Carregando professores...</option></select>
+        <input type="password" id="senha" placeholder="Sua Senha">
+        <button onclick="verificarSenha()" id="btnEntrar" class="btn btn-login">PRÓXIMO</button>
+    </div>
+<span class="copyright">© Erivaldo Silva</span>
+    <div id="areaSelecaoLocal">
+        <h2 id="saudacaoLocal">Olá!</h2>
+        <p>Configure seu turno de trabalho</p>
+        
+        <label>Escola:</label>
+        <select id="selEscola">
+            <option value="EMEIF MARIA MADALENA TORRES DANTAS">EMEIF MARIA MADALENA TORRES DANTAS</option>
+            <option value="EMEF JOAQUIM ALVES FEITOSA">EMEF JOAQUIM ALVES FEITOSA</option>
+            <option value="EMEF MIGUEL OTAVIANO DE MEDEIROS">EMEF MIGUEL OTAVIANO DE MEDEIROS</option>
+            <option value="EMEIF FRANCISCA QUIRINO FERREIRA">EMEIF FRANCISCA QUIRINO FERREIRA</option>
+            <option value="EMEIF JOÃO GONÇALVES DA SILVA">EMEIF JOÃO GONÇALVES DA SILVA</option>
+            <option value="EMEIF JOSÉ ALVES SABINO">EMEIF JOSÉ ALVES SABINO</option>
+            <option value="EMEIF JOSÉ PEDRO DE MELO">EMEIF JOSÉ PEDRO DE MELO</option>
+            <option value="EMEIF JOSÉ VIEIRA DA SILVA">EMEIF JOSÉ VIEIRA DA SILVA</option>
+            <option value="EMEIF MARIA PEREIRA DOS SANTOS">EMEIF MARIA PEREIRA DOS SANTOS</option>
+        </select>
+
+        <label>Turno:</label>
+        <select id="selTurno">
+            <option value="MANHÃ">MANHÃ</option>
+            <option value="TARDE">TARDE</option>
+            <option value="NOITE">NOITE</option>
+        </select>
+
+        <label>Sua Turma / Série:</label>
+        <select id="selTurma">
+            <option value="">Carregando turmas...</option>
+        </select>
+
+        <button onclick="confirmarLocal()" class="btn btn-login">CONFIRMAR E ACESSAR</button>
+        <br>
+        <button onclick="fazerLogout()" style="background:none; border:none; color:gray; cursor:pointer; text-decoration:underline; font-size:12px;">Trocar de Usuário</button>
     </div>
 
-    <label>Professor</label>
-    <select id="professor"><option>Carregando...</option></select>
-    
-    <label>Senha</label>
-    <input type="password" id="senha" placeholder="Sua senha">
-
-    <button class="btn" style="background:#f39c12" onclick="validar('busca')">🔍 BUSCA SIMPLES (FICHAS)</button>
-    <button class="btn" style="background:#00bcd4" onclick="validar('relatorio')">📋 RELATÓRIO DETALHADO (TABELA)</button>
-    <button class="btn" style="background:#1a73e8" onclick="validar('dash')">📊 ESTATÍSTICAS (PAINEL)</button>
-    
-    <hr style="border:0; border-top:1px solid #eee; margin:20px 0;">
-    
-    <label>Dados para Novo Plano</label>
-    <select id="escola"><option value="">Selecione a Escola...</option></select>
-    <select id="turno" style="margin-top:8px;"><option value="">Turno...</option></select>
-    <select id="turma" style="margin-top:8px;"><option value="">Turma...</option></select>
-    
-    <button class="btn" style="background:#27ae60" onclick="validar('novo')">➕ CRIAR NOVO PLANO</button>
-    
-    <span class="copyright">© Erivaldo Silva</span>
+    <div id="areaMenu">
+        <h2 id="boasVindas">Olá!</h2>
+        <p id="infoLocal" style="color:var(--primary); font-weight:bold; margin-top:-10px; font-size:12px;"></p>
+        
+        <a href="formulario.html" class="btn btn-menu">📝 Novo Registro de Aula</a>
+        <a href="busca.html" class="btn btn-menu">📂 Meus Planos (PDF Individual)</a>
+        <a href="busca_detalhada.html" class="btn btn-menu">📑 Relatório Detalhado</a>
+        <a href="painel.html" class="btn btn-menu">📊 Ver Meu Desempenho</a>
+        
+        <button onclick="fazerLogout()" class="btn btn-sair">SAIR DO SISTEMA</button>
+    </div>
 </div>
 
 <script>
-    const url = 'https://script.google.com/macros/s/AKfycbwdOJTwK5jiwW0R2xDIBGqGkwcUphuUUd3ZAkB4ktDJMPR99D-7lRrm85RUhw1JGJ3XpA/exec'; 
+    const urlScript = 'https://script.google.com/macros/s/AKfycbw7wTGHKZ3j8HNDW2bhodphWVBKb5n3jIu7O_8hWfB9oChBmzEq8X3PoPcxyUQW_Hgu3w/exec'; // 
+    let baseDocentes = [];
 
     window.onload = () => {
-        fetch(url + '?tipo=docentes').then(res => res.json()).then(data => {
-            data.shift();
-            const montar = (id, col) => {
-                const itens = [...new Set(data.map(r => r[col]).filter(v => v !== ""))].sort();
-                const el = document.getElementById(id);
-                el.innerHTML = `<option value="">${id.toUpperCase()}...</option>`;
-                itens.forEach(i => el.innerHTML += `<option value="${i}">${i}</option>`);
-            };
-            montar('professor', 1); montar('escola', 0); montar('turno', 2); montar('turma', 3);
-        });
+        const prof = localStorage.getItem('professor');
+        const escola = localStorage.getItem('escola');
+        if (prof && escola) { 
+            exibirMenu(prof); 
+        } else { 
+            document.getElementById('areaLogin').style.display = 'block';
+            carregarDadosIniciais();
+        }
     };
 
-    function validar(modo) {
-        const prof = document.getElementById('professor').value;
-        const pass = document.getElementById('senha').value;
-        
-        if(!prof || !pass) { alert("Selecione professor e senha!"); return; }
+    // Carrega Professores e Turmas de uma vez só
+    function carregarDadosIniciais() {
+        fetch(urlScript + '?tipo=docentes')
+        .then(res => res.json())
+        .then(data => {
+            baseDocentes = data;
+            
+            // 1. Popular Lista de Professores (Coluna B - Índice 1)
+            const selectProf = document.getElementById('listaProfessores');
+            selectProf.innerHTML = '<option value="">Selecione seu nome...</option>';
+            const nomes = [...new Set(data.map(d => d[1].toString().trim()))].sort();
+            nomes.forEach(n => {
+                let opt = document.createElement('option');
+                opt.value = n; opt.innerHTML = n;
+                selectProf.appendChild(opt);
+            });
 
-        fetch(`${url}?tipo=login&user=${encodeURIComponent(prof)}&pass=${encodeURIComponent(pass)}`)
-        .then(r => r.json()).then(res => {
-            if(res.sucesso) {
-                localStorage.setItem('professor', prof);
-
-                if(modo === 'novo') {
-                    const esc = document.getElementById('escola').value;
-                    const tur = document.getElementById('turno').value;
-                    const trm = document.getElementById('turma').value;
-                    
-                    if(!esc || !tur || !trm) { alert("Selecione Escola, Turno e Turma!"); return; }
-                    
-                    localStorage.setItem('escola', esc);
-                    localStorage.setItem('turno', tur);
-                    localStorage.setItem('turma', trm);
-                    localStorage.removeItem('edit_id');
-                    localStorage.removeItem('edit_dados');
+            // 2. Popular Lista de Turmas (Coluna D - Índice 3) - CARREGA TODAS
+            const selectTurma = document.getElementById('selTurma');
+            selectTurma.innerHTML = '<option value="">Selecione a Turma...</option>';
+            const turmas = [...new Set(data.map(d => d[3].toString().trim()))].sort();
+            turmas.forEach(t => {
+                if(t && t !== "") {
+                    let opt = document.createElement('option');
+                    opt.value = t; opt.innerHTML = t;
+                    selectTurma.appendChild(opt);
                 }
-
-                // Lógica de redirecionamento atualizada
-                if (modo === 'dash') window.location.href = 'painel.html';
-                else if (modo === 'relatorio') window.location.href = 'busca_detalhada.html';
-                else if (modo === 'busca') window.location.href = 'busca.html';
-                else if (modo === 'novo') window.location.href = 'formulario.html';
-                
-            } else alert("Senha incorreta!");
+            });
         });
+    }
+
+    function verificarSenha() {
+        const nome = document.getElementById('listaProfessores').value;
+        const senha = document.getElementById('senha').value.trim();
+        
+        // Verifica se existe o par nome/senha em qualquer linha
+        const loginValido = baseDocentes.find(u => u[1].toString().trim() === nome && u[4].toString().trim() === senha);
+
+        if (loginValido) {
+            localStorage.setItem('professor', nome);
+            document.getElementById('areaLogin').style.display = 'none';
+            document.getElementById('areaSelecaoLocal').style.display = 'block';
+            document.getElementById('saudacaoLocal').innerText = "Olá, " + nome;
+        } else {
+            alert("❌ Senha incorreta ou Usuário não selecionado!");
+        }
+    }
+
+    function confirmarLocal() {
+        const escola = document.getElementById('selEscola').value;
+        const turno = document.getElementById('selTurno').value;
+        const turma = document.getElementById('selTurma').value;
+
+        if (!turma) return alert("Selecione sua turma!");
+
+        localStorage.setItem('escola', escola);
+        localStorage.setItem('turno', turno);
+        localStorage.setItem('turma', turma);
+
+        exibirMenu(localStorage.getItem('professor'));
+    }
+
+    function exibirMenu(nome) {
+        document.getElementById('areaLogin').style.display = 'none';
+        document.getElementById('areaSelecaoLocal').style.display = 'none';
+        document.getElementById('areaMenu').style.display = 'block';
+        document.getElementById('boasVindas').innerText = "Olá, " + nome;
+        document.getElementById('infoLocal').innerText = `${localStorage.getItem('escola')} | ${localStorage.getItem('turma')}`;
+    }
+
+    function fazerLogout() {
+        localStorage.clear();
+        window.location.reload();
     }
 </script>
 </body>

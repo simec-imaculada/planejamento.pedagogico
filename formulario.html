@@ -2,104 +2,163 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Registro de Aula - Seguro</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="theme-color" content="#1a73e8">
+    
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f7f6; padding: 20px; margin: 0; }
         .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         .card { border: 1px solid #e0e0e0; padding: 15px; border-radius: 10px; margin-bottom: 15px; }
-        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; }
-        select, input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
-        .btn-salvar { width: 100%; padding: 16px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        label { display: block; margin-top: 10px; font-weight: bold; font-size: 13px; color: #444; }
+        select, input, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        select:disabled { background: #f9f9f9; cursor: not-allowed; }
+        .btn-salvar { width: 100%; padding: 16px; background: #27ae60; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; }
+        .btn-salvar:disabled { background: #95a5a6; }
         .status-rascunho { font-size: 11px; color: #666; font-style: italic; margin-top: 5px; text-align: right; }
+        .header-form { display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .loading-overlay { color: #1a73e8; font-weight: bold; text-align: center; padding: 10px; display: none; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-        <h2 id="titulo">📝 Registro de Aula</h2>
-        <button onclick="window.location.href='index.html'" style="color:red; border:none; background:none; cursor:pointer;">Sair</button>
+    <div class="header-form">
+        <h2 id="titulo" style="margin:0; color:#1a73e8;">📝 Registro de Aula</h2>
+        <button onclick="window.location.href='index.html'" style="color:#e74c3c; border:none; background:none; cursor:pointer; font-weight:bold;">Sair</button>
     </div>
+
+    <div id="msgCarregando" class="loading-overlay">⏳ Carregando referências BNCC...</div>
 
     <form id="formAula">
         <input type="hidden" name="rowId" id="rowId">
+        
         <div class="card">
             <div style="display:flex; gap:10px;">
-                <div style="flex:1;"><label>Bimestre</label><select name="bimestre" id="bimestre"><option>1º Bimestre</option><option>2º Bimestre</option><option>3º Bimestre</option><option>4º Bimestre</option></select></div>
-                <div style="flex:1;"><label>Data</label><input type="date" name="data" id="campoData" required></div>
+                <div style="flex:1;"><label>Bimestre</label><select name="bimestre" id="bimestre" required><option value="">Selecione...</option><option>1º Bimestre</option><option>2º Bimestre</option><option>3º Bimestre</option><option>4º Bimestre</option></select></div>
+                <div style="flex:1;"><label>Data da Aula</label><input type="date" name="data" id="campoData" required></div>
             </div>
-            <label>Aulas</label><select name="totalAulas" id="totalAulas"><option value="1">1 Aula</option><option value="2">2 Aulas</option><option value="3">3 Aulas</option><option value="4">4 Aulas</option></select>
+            <label>Quantidade de Aulas</label><select name="totalAulas" id="totalAulas"><option value="1">1 Aula</option><option value="2">2 Aulas</option><option value="3">3 Aulas</option><option value="4">4 Aulas</option></select>
         </div>
+
         <div class="card">
-            <label>Área</label><select id="area" name="area" required></select>
-            <label>Ano</label><select id="ano" name="ano" disabled required></select>
-            <label>Práticas</label><select id="praticas" name="praticas" disabled required></select>
-            <label>Objetos</label><select id="objetos" name="objetos" disabled required></select>
-            <label>Habilidades</label><select id="habilidades" name="habilidades" disabled required></select>
+            <label>Área de Conhecimento</label><select id="area" name="area" required disabled><option>Carregando...</option></select>
+            <label>Ano/Série</label><select id="ano" name="ano" disabled required><option value="">Aguarde...</option></select>
+            <label>Práticas / Unid. Temáticas</label><select id="praticas" name="praticas" disabled required><option value="">Aguarde...</option></select>
+            <label>Objetos de Conhecimento</label><select id="objetos" name="objetos" disabled required><option value="">Aguarde...</option></select>
+            <label>Habilidades (BNCC)</label><select id="habilidades" name="habilidades" disabled required><option value="">Aguarde...</option></select>
         </div>
+
         <div class="card">
-            <label>Tema</label><input type="text" id="tema" name="tema" required>
-            <label>Metodologia</label><textarea id="metodologia" name="metodologia" rows="5" required></textarea>
+            <label>Tema/Subtema da Aula</label><input type="text" id="tema" name="tema" required>
+            <label>Metodologia e Procedimentos</label><textarea id="metodologia" name="metodologia" rows="5" required></textarea>
             <div id="statusSalvo" class="status-rascunho"></div>
         </div>
-        <button type="submit" class="btn-salvar" id="btnSalvar">FINALIZAR E SALVAR NA PLANILHA</button>
+
+        <button type="submit" class="btn-salvar" id="btnSalvar">FINALIZAR E SALVAR</button>
     </form>
 </div>
 
 <script>
-    const url = 'https://script.google.com/macros/s/AKfycbwdOJTwK5jiwW0R2xDIBGqGkwcUphuUUd3ZAkB4ktDJMPR99D-7lRrm85RUhw1JGJ3XpA/exec'; 
+    const url = 'https://script.google.com/macros/s/AKfycbw7wTGHKZ3j8HNDW2bhodphWVBKb5n3jIu7O_8hWfB9oChBmzEq8X3PoPcxyUQW_Hgu3w/exec'; // 
+    const profLogado = localStorage.getItem('professor');
     let baseDados = [];
 
-    // TRAVA DE SEGURANÇA: Só entra se estiver logado
-    if (!localStorage.getItem('professor')) {
-        alert("Acesso negado! Faça login primeiro.");
-        window.location.href = 'index.html';
-    }
+    if (!profLogado) { window.location.href = 'index.html'; }
 
     window.onload = () => {
-        fetch(url).then(res => res.json()).then(data => {
-            baseDados = data; 
-            preencher('area', [...new Set(data.map(r => r[0]))].sort());
-            const modo = new URLSearchParams(window.location.search).get('modo');
-            if(modo === 'editar') carregarEdicao();
-            else recuperarRascunho(); // Tenta recuperar rascunho se for plano novo
+        document.getElementById('msgCarregando').style.display = 'block';
+        
+        fetch(url)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('msgCarregando').style.display = 'none';
+            if (data && data.length > 0) {
+                baseDados = data;
+                // Ativa o primeiro select
+                const selectArea = document.getElementById('area');
+                selectArea.disabled = false;
+                preencher('area', [...new Set(data.map(r => r[0]))].filter(v => v).sort());
+                
+                const modo = new URLSearchParams(window.location.search).get('modo');
+                if(modo === 'editar') carregarEdicao();
+                else recuperarRascunho();
+            } else {
+                alert("Erro: Não foi possível carregar a aba REFERENCIAS. Verifique se há dados nela.");
+            }
+        })
+        .catch(err => {
+            document.getElementById('msgCarregando').innerText = "❌ Erro ao carregar dados.";
+            alert("Erro de conexão com a planilha. Verifique a internet ou o link do Script.");
         });
     };
 
     function preencher(id, lista) {
-        const s = document.getElementById(id); s.innerHTML = '<option value="">Selecione...</option>';
-        lista.forEach(i => s.innerHTML += `<option value="${i}">${i}</option>`); s.disabled = false;
+        const s = document.getElementById(id); 
+        s.innerHTML = '<option value="">Selecione...</option>';
+        lista.forEach(i => s.innerHTML += `<option value="${i}">${i}</option>`); 
+        s.disabled = false;
     }
 
-    // Cascata BNCC
-    document.getElementById('area').onchange = (e) => preencher('ano', [...new Set(baseDados.filter(r => r[0] === e.target.value).map(r => r[1]))]);
-    document.getElementById('ano').onchange = (e) => preencher('praticas', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === e.target.value).map(r => r[2]))]);
-    document.getElementById('praticas').onchange = (e) => preencher('objetos', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === e.target.value).map(r => r[3]))]);
-    document.getElementById('objetos').onchange = (e) => preencher('habilidades', [...new Set(baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === document.getElementById('ano').value && r[2] === document.getElementById('praticas').value && r[3] === e.target.value).map(r => r[4]))]);
+    // Lógica de Cascata BNCC
+    document.getElementById('area').onchange = (e) => {
+        const filtrado = baseDados.filter(r => r[0] === e.target.value);
+        preencher('ano', [...new Set(filtrado.map(r => r[1]))].sort());
+        ['praticas', 'objetos', 'habilidades'].forEach(id => { 
+            document.getElementById(id).innerHTML = '<option value="">Aguarde...</option>';
+            document.getElementById(id).disabled = true;
+        });
+    };
 
-    // RASCUNHO AUTOMÁTICO (A cada 5 seg)
+    document.getElementById('ano').onchange = (e) => {
+        const filtrado = baseDados.filter(r => r[0] === document.getElementById('area').value && r[1] === e.target.value);
+        preencher('praticas', [...new Set(filtrado.map(r => r[2]))].sort());
+    };
+
+    document.getElementById('praticas').onchange = (e) => {
+        const filtrado = baseDados.filter(r => 
+            r[0] === document.getElementById('area').value && 
+            r[1] === document.getElementById('ano').value && 
+            r[2] === e.target.value
+        );
+        preencher('objetos', [...new Set(filtrado.map(r => r[3]))].sort());
+    };
+
+    document.getElementById('objetos').onchange = (e) => {
+        const filtrado = baseDados.filter(r => 
+            r[0] === document.getElementById('area').value && 
+            r[1] === document.getElementById('ano').value && 
+            r[2] === document.getElementById('praticas').value &&
+            r[3] === e.target.value
+        );
+        preencher('habilidades', [...new Set(filtrado.map(r => r[4]))].sort());
+    };
+
+    // RASCUNHO AUTOMÁTICO
     setInterval(() => {
         const tema = document.getElementById('tema').value;
         const meto = document.getElementById('metodologia').value;
         if(tema || meto) {
             localStorage.setItem('rascunho_plano', JSON.stringify({tema, meto, data: document.getElementById('campoData').value}));
-            document.getElementById('statusSalvo').innerText = "Rascunho salvo no navegador às " + new Date().toLocaleTimeString();
+            document.getElementById('statusSalvo').innerText = "Rascunho salvo às " + new Date().toLocaleTimeString();
         }
     }, 5000);
 
     function recuperarRascunho() {
         const salvo = localStorage.getItem('rascunho_plano');
-        if (salvo && confirm("Você tem um rascunho não finalizado. Deseja recuperar?")) {
+        if (salvo && confirm("Recuperar rascunho anterior?")) {
             const d = JSON.parse(salvo);
-            document.getElementById('tema').value = d.tema;
-            document.getElementById('metodologia').value = d.meto;
-            document.getElementById('campoData').value = d.data;
+            document.getElementById('tema').value = d.tema || "";
+            document.getElementById('metodologia').value = d.meto || "";
+            document.getElementById('campoData').value = d.data || "";
         }
     }
 
     function carregarEdicao() {
         const raw = localStorage.getItem('edit_dados'); if(!raw) return;
         const d = JSON.parse(raw);
-        document.getElementById('titulo').innerText = "✏️ Corrigindo Registro";
+        document.getElementById('titulo').innerText = "✏️ Editar Registro";
         document.getElementById('rowId').value = localStorage.getItem('edit_id');
         document.getElementById('bimestre').value = d[4];
         if(d[5]) document.getElementById('campoData').value = new Date(d[5]).toISOString().split('T')[0];
@@ -107,36 +166,51 @@
         document.getElementById('tema').value = d[12];
         document.getElementById('metodologia').value = d[13];
 
-        const disparar = (id, val, prox) => {
-            const el = document.getElementById(id); el.value = val;
-            el.dispatchEvent(new Event('change'));
-            if(prox) setTimeout(() => disparar(prox.id, prox.val, prox.next), 300);
-        };
-        disparar('area', d[7], {id:'ano', val:d[8], next:{id:'praticas', val:d[9], next:{id:'objetos', val:d[10], next:{id:'habilidades', val:d[11]}}}});
+        setTimeout(() => {
+            const disp = (id, v) => { const e = document.getElementById(id); e.value = v; e.dispatchEvent(new Event('change')); };
+            disp('area', d[7]);
+            setTimeout(() => { disp('ano', d[8]);
+                setTimeout(() => { disp('praticas', d[9]);
+                    setTimeout(() => { disp('objetos', d[10]);
+                        setTimeout(() => { disp('habilidades', d[11]); }, 500);
+                    }, 500);
+                }, 500);
+            }, 500);
+        }, 800);
     }
 
     document.getElementById('formAula').onsubmit = (e) => {
         e.preventDefault();
+        
+        const dataSel = new Date(document.getElementById('campoData').value);
+        const hoje = new Date();
+        hoje.setHours(0,0,0,0);
+        dataSel.setHours(0,0,0,0);
+
+        const diffDias = Math.ceil((dataSel - hoje) / (1000 * 60 * 60 * 24));
+
+        if (diffDias > 15 || diffDias < -15) {
+            alert("⚠️ BLOQUEADO: A data deve estar entre 15 dias para o passado ou 15 dias para o futuro.");
+            return;
+        }
+
         const btn = document.getElementById('btnSalvar'); 
-        btn.innerText = "⏳ ENVIANDO PARA PLANILHA..."; 
-        btn.disabled = true;
+        btn.innerText = "⏳ SALVANDO..."; btn.disabled = true;
 
         const fd = new FormData(e.target);
         fd.append('escola', localStorage.getItem('escola') || "");
-        fd.append('professor', localStorage.getItem('professor') || "");
+        fd.append('professor', profLogado || "");
         fd.append('turno', localStorage.getItem('turno') || "");
         fd.append('turma', localStorage.getItem('turma') || "");
 
         fetch(url, {method:'POST', body:fd}).then(() => {
-            alert("✅ PLANO SALVO COM SUCESSO!");
+            alert("✅ PLANO SALVO!");
             localStorage.removeItem('rascunho_plano');
-            localStorage.removeItem('edit_id'); 
-            localStorage.removeItem('edit_dados');
             window.location.href='index.html';
         }).catch(() => {
-            alert("❌ Erro ao conectar. Tente novamente.");
+            alert("❌ Erro de conexão.");
             btn.disabled = false;
-            btn.innerText = "TENTAR SALVAR NOVAMENTE";
+            btn.innerText = "TENTAR NOVAMENTE";
         });
     };
 </script>
